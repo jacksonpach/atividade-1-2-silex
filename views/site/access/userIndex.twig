@@ -4,14 +4,12 @@
   <!-- start content -->
   
   <section class="ui container">
-  <h1>Users</h1>
-  <a href="http://localhost:8080/user">List User</a>
-  <hr>
-  <a href="http://localhost:8080/add">Gravar</a>
-  <ul class="ui ul">
+   <h2 align="center">USERS</h2>
+   <a href="http://localhost:8080/user/create">Create user</a>
    {% for item in data %}
       <li class="ui li">
          ID: {{ item.id }}
+         <a href="http://localhost:8080/user/edit/{{ item.id }}">Edit</a>
       </li>
       <li>
          EMAIL: {{ item.email }}
@@ -22,14 +20,11 @@
       <li>
          LAST_NAME: {{ item.last_name }}
       </li>
-      <li>
-         AVATAR: 
-         <img src={{ item.avatar }}>
-      </li>
    <br />
    {% endfor %}
-  </ul>
- </section> 
+
+</section>
+  
 
   <!-- // end content -->
 {% endblock %}

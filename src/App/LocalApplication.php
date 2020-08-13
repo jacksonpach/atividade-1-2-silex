@@ -23,6 +23,7 @@ use Symfony\Component\Debug\ExceptionHandler;
  */
 use App\Controllers\Factory\AccessControllerFactory;
 use App\Controllers\Factory\UserControllerFactory;
+use App\Controllers\Factory\ApiControllerFactory;
 
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
@@ -117,6 +118,7 @@ class LocalApplication extends Application
          */
         $this->mount('/', (new AccessControllerFactory($this))->getController() );
         $this->mount('/user', (new UserControllerFactory($this))->getController() );
+        $this->mount('/api', (new ApiControllerFactory($this))->getController() );
     }
 
     /**

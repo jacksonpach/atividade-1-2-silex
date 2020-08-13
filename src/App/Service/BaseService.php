@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Logs\Log;
+
 use Doctrine\ORM\EntityManager;
 
 use GuzzleHttp\Client;
@@ -9,232 +11,320 @@ use GuzzleHttp\Client;
 class BaseService
 {
 
-    const API_HOST = 'http://localhost';
+   const API_HOST = 'http://localhost';
 
-    /**
-     * Data contains return operations
-     * @var array
-     */
-    protected $data = [];
+   use Log;
 
-    /**
-     * Flag for tracking status of operation
-     * @var bool
-     */
-    protected $status = true;
+   /**
+    * Data contains return operations
+    * @var array
+    */
+   protected $data = [];
 
-    /**
-     * Message from result operation
-     * @var string
-     */
-    protected $message = '';
+   /**
+    * Flag for tracking status of operation
+    * @var bool
+    */
+   protected $status = true;
 
-    /**
-     * @var EntityManager
-     */
-    protected $em;
+   /**
+    * Message from result operation
+    * @var string
+    */
+   protected $message = '';
 
-    /**
-     * BaseService constructor.
-     * @param EntityManager $em
-     */
-    public function __construct(EntityManager $em)
-    {
-        $this->em = $em;
-        $this->init();
-    }
+   /**
+    * @var EntityManager
+    */
+   protected $em;
 
-    public function init()
-    {
-        // @todo implement actions for simulate constructor class
-    }
+   /**
+    * BaseService constructor.
+    * @param EntityManager $em
+    */
+   public function __construct(EntityManager $em)
+   {
+      $this->em = $em;
+      $this->init();
+   }
 
-    /**
-     * @return EntityManager
-     */
-    public function getEm()
-    {
-        return $this->em;
-    }
+   public function init()
+   {
+      // @todo implement actions for simulate constructor class
+   }
 
-    /**
-     * @param int $id
-     * @return object
-     */
-    public function getItem($id)
-    {}
+   /**
+    * @return EntityManager
+    */
+   public function getEm()
+   {
+      return $this->em;
+   }
 
-    /**
-     * @return array
-     */
-    public function getList()
-    {}
+   /**
+    * @param int $id
+    * @return object
+    */
+   public function getItem($id, $table)
+   {
+      $sql = ' SELECT * FROM ' . $table . ' ';
+      $sql .= ' WHERE id = ' . $id . ' ';
+      $rs = $this->executeSql($sql, 'unique');
 
-    /**
-     * @param array $data
-     * @return bool
-     */
-    public function newRegister(array $data)
-    {}
+      return $rs;
+   }
 
-    /**
-     * @param array $data
-     * @return bool
-     */
-    public function updateRegister(array $data)
-    {}
+   /**
+    * @return array
+    */
+   public function getList()
+   {
+   }
 
-    /**
-     * @param int $id
-     * @return bool
-     */
-    public function deleteRegister($id)
-    {}
+   /**
+    * @param array $data
+    * @return bool
+    */
+   public function newRegister(array $data)
+   {
+   }
 
-    /**
-     * @return string
-     */
-    public function getMessage()
-    {
-        return $this->message;
-    }
+   /**
+    * @param array $data
+    * @return bool
+    */
+   public function updateRegister(array $data)
+   {
+   }
 
-    /**
-     * @return bool
-     */
-    public function getStatus()
-    {
-        return $this->status;
-    }
+   /**
+    * @param int $id
+    * @return bool
+    */
+   public function deleteRegister($id)
+   {
+   }
 
-    public function getData()
-    {
-        return $this->data;
-    }
+   /**
+    * @return string
+    */
+   public function getMessage()
+   {
+      return $this->message;
+   }
 
-    /**
-     * @param $uri
-     * @param $pars
-     * @param string $sendMode = form_params|json
-     * @return array|bool|mixed
-     * @throws \Exception
-     */
-    public function getReturnData($uri, $pars, $sendMode = 'form_params')
-    {
-        $urlRequest = $this->getUrlWs() . $uri;
-        if(MOCK_DATA) {
-            return $this->getMockData($uri, $pars);
-        }
+   /**
+    * @return bool
+    */
+   public function getStatus()
+   {
+      return $this->status;
+   }
 
-        $client = new Client(['proxy' => '']);
+   public function getData()
+   {
+      return $this->data;
+   }
 
-        try {
+   /**
+    * @param $uri
+    * @param $pars
+    * @param string $sendMode = form_params|json
+    * @return array|bool|mixed
+    * @throws \Exception
+    */
+   public function getReturnData($uri, $pars, $sendMode = 'form_params')
+   {
+      $urlRequest = $this->getUrlWs() . $uri;
+      if (MOCK_DATA) {
+         return $this->getMockData($uri, $pars);
+      }
 
-            $response = $client->request('POST', $urlRequest,
-                [$sendMode => $pars]
-            );
+      $client = new Client(['proxy' => '']);
 
-            if($response->getStatusCode()) {
-                $body = $response->getBody();
-                $remainingBytes = $body->getContents();
+      try {
 
-                if(!strstr($remainingBytes,'\\')) {
-                    $data = json_decode($remainingBytes, true);
-                    $this->registerInfoCallApi($uri, $pars, $data);
-                    return $data;
-                }
+         $response = $client->request(
+            'POST',
+            $urlRequest,
+            [$sendMode => $pars]
+         );
 
-                $str = json_decode($remainingBytes, true);
-                if(is_array($str)) {
-                    $this->registerInfoCallApi($uri, $pars, $str);
-                    return $str;
-                }
+         if ($response->getStatusCode()) {
+            $body = $response->getBody();
+            $remainingBytes = $body->getContents();
 
-                $data = json_decode($str, true, 1024);
-                $this->registerInfoCallApi($uri, $pars, $data);
-                return $data;
+            if (!strstr($remainingBytes, '\\')) {
+               $data = json_decode($remainingBytes, true);
+               $this->registerInfoCallApi($uri, $pars, $data);
+               return $data;
             }
-        } catch(\Exception $e) {
-            $this->registerErrorApi($uri, $pars, $e->getMessage());
-            $dataError = [
-                'status' => false,
-                'message' => 'Erro no sistema.'
-            ];
 
-            return $dataError;
-        }
+            $str = json_decode($remainingBytes, true);
+            if (is_array($str)) {
+               $this->registerInfoCallApi($uri, $pars, $str);
+               return $str;
+            }
 
-        return false;
-    }
+            $data = json_decode($str, true, 1024);
+            $this->registerInfoCallApi($uri, $pars, $data);
+            return $data;
+         }
+      } catch (\Exception $e) {
+         $this->registerErrorApi($uri, $pars, $e->getMessage());
+         $dataError = [
+            'status' => false,
+            'message' => 'Erro no sistema.'
+         ];
 
-    public function getUrlWs()
-    {
-        return self::API_HOST;
-    }
+         return $dataError;
+      }
 
-    public function registerInfoCallApi($uri, $pars, $dataReturn)
-    {
-        $date = new \Datetime();
-        $hourControl = $date->format('Y-m-d-H');
-        $fileName = 'log_'.$hourControl.'.txt';
+      return false;
+   }
 
-        $logDesc  = 'URI: '.$uri . ' - ';
-        $logDesc .= 'DATETIME:  '.$date->format('Y-m-d H:i:s'). "\n";
-        $logDesc .= 'PARS: ' . json_encode($pars)."\n";
-        $logDesc .= 'RETURN: ' . json_encode($dataReturn)."\n\n";
+   public function getUrlWs()
+   {
+      return self::API_HOST;
+   }
 
-        $f = fopen('../.../../app/logs/'.$fileName, 'a+');
-        fwrite($f, $logDesc);
-        fclose($f);
-    }
+   public function registerInfoCallApi($uri, $pars, $dataReturn)
+   {
+      $date = new \Datetime();
+      $hourControl = $date->format('Y-m-d-H');
+      $fileName = 'log_' . $hourControl . '.txt';
 
-    public function registerErrorApi($uri, $pars, $error)
-    {
-        if($uri == '/view/page') {
-            return;
-        }
+      $logDesc  = 'URI: ' . $uri . ' - ';
+      $logDesc .= 'DATETIME:  ' . $date->format('Y-m-d H:i:s') . "\n";
+      $logDesc .= 'PARS: ' . json_encode($pars) . "\n";
+      $logDesc .= 'RETURN: ' . json_encode($dataReturn) . "\n\n";
 
-        $date = new \Datetime();
-        $hourControl = $date->format('Y-m-d-H');
-        $fileName = 'error_'.$hourControl.'.txt';
+      $f = fopen('../.../../app/logs/' . $fileName, 'a+');
+      fwrite($f, $logDesc);
+      fclose($f);
+   }
 
-        $logDesc  = 'URI: '.$uri . ' - ';
-        $logDesc .= 'DATETIME:  '.$date->format('Y-m-d H:i:s'). "\n";
-        $logDesc .= 'PARS: ' . json_encode($pars)."\n";
-        $logDesc .= 'ERROR: ' . $error."\n\n";
+   public function registerErrorApi($uri, $pars, $error)
+   {
+      if ($uri == '/view/page') {
+         return;
+      }
 
-        $f = fopen('../.../../app/logs/'.$fileName, 'a+');
-        fwrite($f, $logDesc);
-        fclose($f);
-    }
+      $date = new \Datetime();
+      $hourControl = $date->format('Y-m-d-H');
+      $fileName = 'error_' . $hourControl . '.txt';
 
-    /**
-     * Method for simulate access API's
-     *
-     * @param $uri
-     * @param array $pars
-     * @return mixed
-     * @throws \Exception
-     */
-    public function getMockData($uri, $pars = [])
-    {
-        $mockData = [
-            '/login/check-data' => [
-                'status' => true,
-                'message' => ''
-            ],
-        ];
+      $logDesc  = 'URI: ' . $uri . ' - ';
+      $logDesc .= 'DATETIME:  ' . $date->format('Y-m-d H:i:s') . "\n";
+      $logDesc .= 'PARS: ' . json_encode($pars) . "\n";
+      $logDesc .= 'ERROR: ' . $error . "\n\n";
 
-        $this->data = [
-          'name' => '',
-          'phone' => '',
-          'email' => '',
-        ];
+      $f = fopen('../.../../app/logs/' . $fileName, 'a+');
+      fwrite($f, $logDesc);
+      fclose($f);
+   }
 
-        if(array_key_exists($uri, $mockData)) {
-            return $mockData[$uri];
-        } else {
-            throw new \Exception("Mock Uri Data Not Implement : " . $uri);
-        }
-    }
+   /**
+    * Method for simulate access API's
+    *
+    * @param $uri
+    * @param array $pars
+    * @return mixed
+    * @throws \Exception
+    */
+   public function getMockData($uri, $pars = [])
+   {
+      $mockData = [
+         '/login/check-data' => [
+            'status' => true,
+            'message' => ''
+         ],
+      ];
+
+      $this->data = [
+         'name' => '',
+         'phone' => '',
+         'email' => '',
+      ];
+
+      if (array_key_exists($uri, $mockData)) {
+         return $mockData[$uri];
+      } else {
+         throw new \Exception("Mock Uri Data Not Implement : " . $uri);
+      }
+   }
+
+   /**
+    * @param $table
+    * @param $data
+    * @return bool
+    */
+   public function insert($table, $data)
+   {
+      $status = true;
+      try {
+         $this->em->getConnection()->insert($table, $data);
+      } catch (\Exception $e) {
+         $this->logError(__CLASS__, __METHOD__, $e->getMessage());
+         $status = false;
+      }
+      return $status;
+   }
+
+   /**
+    * @param $table
+    * @param $data
+    * @param $cond
+    * @return bool
+    */
+   public function updateData($table, $data, $cond)
+   {
+      $status = true;
+      try {
+         $this->em->getConnection()->update($table, $data, $cond);
+      } catch (\Exception $e) {
+         $this->logError(__CLASS__, __METHOD__, $e->getMessage());
+         $status = false;
+      }
+      return $status;
+   }
+
+
+   /**
+    * @param $table
+    * @return array
+    */
+   public function getItems($table)
+   {
+      $sql = ' SELECT * FROM ' . $table . ' ';
+      $rs = $this->executeSql($sql, 'all');
+
+      return $rs;
+   }
+
+   /**
+    * @param $sql
+    * @param string $get
+    * @return array|bool|mixed
+    * @throws \Doctrine\DBAL\DBALException
+    */
+   public function executeSql($sql, $get = 'unique')
+   {
+      $stmt = $this->em->getConnection()->prepare($sql);
+      try {
+         $stmt->execute();
+      } catch (\Exception $e) {
+         $this->logError(__CLASS__, __METHOD__, $e->getMessage());
+      }
+
+      if ($get == 'all') {
+         return $stmt->fetchAll();
+      }
+
+      if ($get == null) {
+         return true;
+      }
+
+      return $stmt->fetch();
+   }
 }

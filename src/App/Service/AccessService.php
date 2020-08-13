@@ -9,21 +9,26 @@ namespace App\Service;
 class AccessService extends BaseService
 {
 
-    /**
-     * @var string
-     */
-    protected $token;
+   /**
+    * @var string
+    */
+   protected $token;
 
-    /**
-     * @param array $pars
-     * @return bool
-     */
-    public function confirmData(array $pars)
-    {
-        $this->status = true;
+   /**
+    * @param array $pars
+    * @return bool
+    */
+   public function confirmData(array $pars)
+   {
+      $this->status = true;
 
-        // @todo code for check login data
+      // @todo code for check login data
 
-        return $this->status;
-    }
+      return $this->status;
+   }
+
+   public function createUser(array $pars)
+   {
+      return $this->insert('user', $pars);
+   }
 }

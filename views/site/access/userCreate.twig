@@ -1,0 +1,43 @@
+{% extends 'site/base.twig' %}
+
+{% block content %}
+  <!-- start content -->
+  
+  <section class="ui container">
+   <h2 align="center">USERS</h2>
+  
+    <form class="ui form" method="post">
+
+        <div class="field">
+            <label>EMAIL:</label>
+            <input type="text" name="email">
+        </div>
+
+        <div class="field">
+            <label>FIRST_NAME</label>
+            <input type="text" name="first_name">
+        </div>
+
+        <div class="field">
+            <label>LAST_NAME</label>
+            <input type="text" name="last_name">
+        </div>
+
+        <div class="field">
+            <label>AVATAR</label>
+            <input type="text" name="avatar">
+        </div>
+
+        <button class="ui button" type="submit">Gravar</button>
+
+    </form>
+
+</section>
+  
+
+  <!-- // end content -->
+{% endblock %}
+
+{% block footer %}
+  {{ parent() }}
+{% endblock %}
